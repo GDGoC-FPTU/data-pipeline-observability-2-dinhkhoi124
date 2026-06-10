@@ -47,7 +47,15 @@ def extract(file_path):
     #   with open(file_path, 'r') as f:
     #       data = json.load(f)
     #   return data
-    pass
+    # pass
+    
+    try:
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Error: {file_path} not found.")
+        return []
+
 
 
 def validate(data):
@@ -72,6 +80,29 @@ def validate(data):
     # TODO: Lap qua data, kiem tra tung record
     # Giu lai record hop le, dem record loi
 
+    valid_records = []
+    dropped_records = []
+
+
+    for record in data:
+        # Check Price
+        if record.get('price', 0) <= 0:
+            dropped_records.append({"id": record.get('id'), "reason": "Price <= 0"})
+            continue
+            
+        # Check Category
+        if not record.get('category'):
+            dropped_records.append({"id": record.get('id'), "reason": "Missing Category"})
+            continue
+            
+        valid_records.append(record)
+        
+    print(f"Validation summary: {len(valid_records)} kept, {len(dropped_records)} dropped.")
+    if dropped_records:
+        print(f"Errors found: {dropped_records}")
+    return valid_records
+
+
     print(f"Validation complete. Valid: {len(valid_records)}, Errors: {error_count}")
     return valid_records
 
@@ -95,7 +126,21 @@ def transform(data):
         pd.DataFrame: DataFrame da duoc transform
     """
     # TODO: Tao DataFrame va ap dung transformations
-    pass
+    # pass
+    
+    df = pd.DataFrame(data)
+    
+    # Logic 1: Discount
+    df['discounted_price'] = df['price'] * 0.9
+    
+    # Logic 2: Formatting
+    df['category'] = df['category'].str.title()
+    
+    # Logic 3: Metadata (Observability)
+    df['processed_at'] = datetime.datetime.now().isoformat()
+    
+    return df
+
 
 
 def load(df, output_path):
@@ -106,7 +151,11 @@ def load(df, output_path):
        - df.to_csv(output_path, index=False)
     """
     # TODO: Luu DataFrame ra CSV
-    print(f"Data saved to {output_path}")
+    
+    df.to_csv(output_path, index=False)
+    print(f"Successfully loaded {len(df)} records to {output_path}")
+
+    # print(f"Data saved to {output_path}")
 
 
 # ============================================================
